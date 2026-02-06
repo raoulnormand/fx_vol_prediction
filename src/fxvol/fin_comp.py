@@ -10,19 +10,23 @@ import pandas as pd
 # Compute log returns
 
 
-def comp_log_returns(df: pd.DataFrame) -> pd.DataFrame:
-    returns = df / df.shift(1)
+def log_returns(spots: pd.Series | pd.DataFrame) -> pd.Series | pd.DataFrame:
+    """
+    Compute log returns from spots.
+    First value will become na.
+    """
+    returns = spots / spots.shift(1)
     return returns.apply(np.log)
 
 
 # Compute historic vol
 
 
-def comp_hist_vol(df: pd.DataFrame | pd.Series, period: int = 21) -> pd.DataFrame | pd.Series:
+def realized_vol(
+    log_ret: pd.Series | pd.DataFrame, window: int
+) -> pd.Series | pd.DataFrame:
     """
-    Compute the histrorical vol over the given period,
-    for each column of the dataframe / series.
-    Current (close) price not included in calculation
+    Compute the realized vol as the std of log returns
+    between t - window + 1 and t.
     """
-    log_returns = comp_log_returns(df)
-    return log_returns.rolling(period, closed="left").std()
+    return log_ret.rolling(window).std()

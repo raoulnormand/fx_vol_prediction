@@ -21,13 +21,15 @@ def fetch_yahoo(tickers: list[str], start: str, end: str) -> pd.DataFrame:
     """
     Fetch data from Yahoo Finance and keep close price only
     """
-    return yf.download(tickers, start=start, end=end)
+    df = yf.download(tickers, start=start, end=end)
+    assert isinstance(df, pd.DataFrame)
+    return df
 
 
 # Save and load CSV
 
 
-def save_csv(df: pd.DataFrame, folder: "str", name: str) -> None:
+def save_csv(df: pd.DataFrame | pd.Series, folder: "str", name: str) -> None:
     """
     Saves df as csv in corresponding folder
     """
