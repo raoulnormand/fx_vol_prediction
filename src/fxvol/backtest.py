@@ -8,20 +8,20 @@ import numpy as np
 import pandas as pd
 
 from fxvol.fin_comp import realized_vol
+from fxvol.models import Model
 
 # Backtest function
 
 
 def run_backtest(
     log_ret: pd.Series,
-    forecast_fn,
+    model: Model,
     horizon: int,
     start_date: float | str = 0.5,
     stride: int = 1,
 ) -> pd.DataFrame:
     """
     Run backtests for the corresponding model.
-    forecast_fn is a function that takes log_ret data and gives forecasts over the next horizon.
     Start at start_date (date or fraction of total time), and jumps by stride each time.
     Computes value for the given horizon.
     """
@@ -36,16 +36,18 @@ def run_backtest(
 
     assert isinstance(end_ix, int)
 
-    # Get predicition on rolling window
+    # Get prediction on rolling window
 
     results = {"Date": [], "y_true": [], "y_pred": []}
 
     while end_ix + horizon < len(log_ret):
         # Training data, current day included
         train_ret = log_ret.iloc[: end_ix + 1]
+        train_vol = real_vol[: end_ix + 1]
 
         # Forecast and true value
-        y_pred = forecast_fn(train_ret, horizon)
+        model.fit(log_ret=train_ret, real_vol=train_vol)
+        y_pred = model.predict(horizon)
         y_true = real_vol.iloc[end_ix + horizon]
 
         # Store results
