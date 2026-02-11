@@ -6,6 +6,7 @@ Define different models.
 
 import numpy as np
 import pandas as pd
+from arch.univariate import HARX, arch_model
 
 # Model class
 
@@ -16,13 +17,11 @@ class Model:
     """
 
     def __init__(self):
-        self.log_ret = None
-        self.real_vol = None
+        self.log_ret = pd.Series()
+        self.real_vol = pd.Series()
         self.state = None
 
-    def fit(
-        self, *, log_ret: pd.Series | None = None, real_vol: pd.Series | None = None
-    ):
+    def fit(self, *, log_ret: pd.Series, real_vol: pd.Series):
         """
         fit methods can take log returns and realized vol as arguments to avoid recomputations.
         """
@@ -43,7 +42,7 @@ class NaiveModel(Model):
     Naive forecast: predict latest realized vol.
     """
 
-    def fit(self, *, real_vol: pd.Series | None = None, **_):
+    def fit(self, *, real_vol: pd.Series, **_):
         """
         fit only needs real_vol
         """
@@ -53,7 +52,6 @@ class NaiveModel(Model):
         """
         predict method only needs a horizon
         """
-        assert isinstance(self.real_vol, pd.Series)
 
         return self.real_vol.iloc[-1]
 
@@ -70,7 +68,7 @@ class RollingMeanModel(Model):
         super().__init__()
         self.window = window
 
-    def fit(self, *, real_vol: pd.Series | None = None, **_):
+    def fit(self, *, real_vol: pd.Series, **_):
         """
         fit only needs real_vol
         """
@@ -80,7 +78,6 @@ class RollingMeanModel(Model):
         """
         predict mean real_vol on window
         """
-        assert isinstance(self.real_vol, pd.Series)
 
         return np.mean(self.real_vol.iloc[-self.window :])  # type: ignore
 
@@ -93,18 +90,17 @@ class EWMA(Model):
     EWMA model.
     """
 
-    def __init__(self, alpha: float = 0.94):
+    def __init__(self, alpha: float):
         """
         alpha: smoothing factor (0 < alpha <= 1)
         """
         super().__init__()
         self.alpha = alpha
 
-    def fit(self, *, log_ret: pd.Series | None = None, **_) -> None:
+    def fit(self, *, log_ret: pd.Series, **_) -> None:
         """
         Compute EWMA of squared log returns.
         """
-        assert isinstance(log_ret, pd.Series)
 
         r2 = log_ret**2
         self.state = r2.ewm(alpha=self.alpha, adjust=False).mean() ** 0.5
@@ -115,3 +111,61 @@ class EWMA(Model):
         For EWMA, we just take the last value (one-step forecast).
         """
         return self.state.iloc[-1]
+
+
+# HAR model
+
+
+class HAR(Model):
+    """
+    Heterogeneous Autoregressive model: OLS with features = rv,
+    and rolling mean over several days
+    """
+
+    def __init__(self, scale: int = 1000):
+        """
+        Scaling factor to avoid convergence issues
+        """
+        super().__init__()
+        self.scale = scale
+
+    def fit(self, *, real_vol: pd.Series, **_):
+        """
+        fit only needs real_vol
+        """
+        self.real_vol = (self.scale * real_vol).dropna()
+        self.state = HARX(self.real_vol, lags=[1, 5, 22, 50, 100]).fit()
+
+    def predict(self, horizon: int = 1) -> float:
+        """
+        predict mean real_vol on window
+        """
+
+        return self.state.forecast(horizon=horizon).mean.iloc[0, horizon - 1] / self.scale  # type: ignore
+
+
+class GARCH(Model):
+    """
+    GARCH model
+    """
+
+    def __init__(self, scale: int = 1000):
+        """
+        Scaling factor to avoid convergence issues
+        """
+        super().__init__()
+        self.scale = scale
+
+    def fit(self, *, real_vol: pd.Series, **_):
+        """
+        fit only needs real_vol
+        """
+        self.real_vol = (self.scale * real_vol).dropna()
+        self.state = arch_model(self.real_vol).fit()
+
+    def predict(self, horizon: int = 1) -> float:
+        """
+        predict mean real_vol on window
+        """
+
+        return self.state.forecast(horizon=horizon).mean.iloc[0, horizon - 1] / self.scale  # type: ignore
