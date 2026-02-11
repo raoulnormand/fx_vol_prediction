@@ -1,171 +1,91 @@
 """
-Define different models.
+Define prediction functions for different models.
+All functions take log_ret and real_vol as argument, even though one of them may not be used; this is not an issue since real_vol is calculated consistently in the basktesting function.
 """
 
 # Imports
+
+from typing import List
 
 import numpy as np
 import pandas as pd
 from arch.univariate import HARX, arch_model
 
-# Model class
-
-
-class Model:
-    """
-    Model class with fit and predict methods
-    """
-
-    def __init__(self):
-        self.log_ret = pd.Series()
-        self.real_vol = pd.Series()
-        self.state = None
-
-    def fit(self, *, log_ret: pd.Series, real_vol: pd.Series):
-        """
-        fit methods can take log returns and realized vol as arguments to avoid recomputations.
-        """
-        raise NotImplementedError
-
-    def predict(self, horizon: int) -> float:
-        """
-        predict method only needs a horizon
-        """
-        raise NotImplementedError
-
-
 # Naive model
 
 
-class NaiveModel(Model):
+def naive_forecast(log_ret: pd.Series, real_vol: pd.Series, horizon: int) -> float:
     """
     Naive forecast: predict latest realized vol.
     """
 
-    def fit(self, *, real_vol: pd.Series, **_):
-        """
-        fit only needs real_vol
-        """
-        self.real_vol = real_vol
-
-    def predict(self, horizon: int = 1) -> float:
-        """
-        predict method only needs a horizon
-        """
-
-        return self.real_vol.iloc[-1]
+    return real_vol.iloc[-1]
 
 
 # Rolling mean model
 
 
-class RollingMeanModel(Model):
+def rolling_mean_forecast(
+    log_ret: pd.Series, real_vol: pd.Series, horizon: int, window: int
+) -> float:
     """
     Rolling mean forecast: predict mean of latest *window* realized vol.
     """
-
-    def __init__(self, window: int):
-        super().__init__()
-        self.window = window
-
-    def fit(self, *, real_vol: pd.Series, **_):
-        """
-        fit only needs real_vol
-        """
-        self.real_vol = real_vol
-
-    def predict(self, horizon: int = 1) -> float:
-        """
-        predict mean real_vol on window
-        """
-
-        return np.mean(self.real_vol.iloc[-self.window :])  # type: ignore
+    return real_vol.iloc[-window:].mean()
 
 
-# Exponential weighted moving average
+# Exponential weighted moving average model
 
 
-class EWMA(Model):
+def ewma_forecast(
+    log_ret: pd.Series, real_vol: pd.Series, horizon: int, alpha: float = 0.92
+) -> float:
     """
-    EWMA model.
+    EWMA model. 0.92 is a recommended value for one-weeek ahead forecast.
     """
 
-    def __init__(self, alpha: float):
-        """
-        alpha: smoothing factor (0 < alpha <= 1)
-        """
-        super().__init__()
-        self.alpha = alpha
-
-    def fit(self, *, log_ret: pd.Series, **_) -> None:
-        """
-        Compute EWMA of squared log returns.
-        """
-
-        r2 = log_ret**2
-        self.state = r2.ewm(alpha=self.alpha, adjust=False).mean() ** 0.5
-
-    def predict(self, horizon: int = 1, **_) -> float:
-        """
-        Forecast volatility at the end of the horizon.
-        For EWMA, we just take the last value (one-step forecast).
-        """
-        return self.state.iloc[-1]
+    var = (log_ret**2).ewm(alpha=alpha, adjust=False).mean()
+    return np.sqrt(var.iloc[-1])
 
 
 # HAR model
 
 
-class HAR(Model):
+def har_forecast(
+    log_ret: pd.Series,
+    real_vol: pd.Series,
+    horizon: int,
+    lags: List[int],
+    scale: int = 1000,
+):
     """
     Heterogeneous Autoregressive model: OLS with features = rv,
-    and rolling mean over several days
+    and rolling mean over several days.
+    Scale to avoid convergence issues.
     """
 
-    def __init__(self, scale: int = 1000):
-        """
-        Scaling factor to avoid convergence issues
-        """
-        super().__init__()
-        self.scale = scale
-
-    def fit(self, *, real_vol: pd.Series, **_):
-        """
-        fit only needs real_vol
-        """
-        self.real_vol = (self.scale * real_vol).dropna()
-        self.state = HARX(self.real_vol, lags=[1, 5, 22, 50, 100]).fit()
-
-    def predict(self, horizon: int = 1) -> float:
-        """
-        predict mean real_vol on window
-        """
-
-        return self.state.forecast(horizon=horizon).mean.iloc[0, horizon - 1] / self.scale  # type: ignore
+    scaled_vol = (scale * real_vol).dropna()
+    model = HARX(scaled_vol, lags=lags).fit(disp="off")
+    return model.forecast(horizon=horizon).mean.iloc[0, -1] / scale  # type: ignore
 
 
-class GARCH(Model):
+# GARCH11 model
+
+
+def garch11_forecast(
+    log_ret: pd.Series,
+    real_vol: pd.Series,
+    horizon: int,
+    scale: int = 100,
+):
     """
-    GARCH model
+    GARCH(1, 1) model
     """
 
-    def __init__(self, scale: int = 1000):
-        """
-        Scaling factor to avoid convergence issues
-        """
-        super().__init__()
-        self.scale = scale
+    scaled_ret = scale * log_ret
+    am = arch_model(scaled_ret, vol="GARCH", p=1, o=0, q=1, dist="normal")
+    res = am.fit(update_freq=5, disp="off")
+    return np.sqrt(res.forecast(horizon=horizon).variance.iloc[-1, -1]) / scale  # type: ignore
 
-    def fit(self, *, real_vol: pd.Series, **_):
-        """
-        fit only needs real_vol
-        """
-        self.real_vol = (self.scale * real_vol).dropna()
-        self.state = arch_model(self.real_vol).fit()
-
-    def predict(self, horizon: int = 1) -> float:
-        """
-        predict mean real_vol on window
-        """
-
-        return self.state.forecast(horizon=horizon).mean.iloc[0, horizon - 1] / self.scale  # type: ignore
+    # model = arch_model(scaled_ret).fit(disp="off")
+    # return model.forecast(horizon=horizon).mean.iloc[0, -1] / scale  # type: ignore

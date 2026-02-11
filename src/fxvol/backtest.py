@@ -8,17 +8,17 @@ import numpy as np
 import pandas as pd
 
 from fxvol.fin_comp import realized_vol
-from fxvol.models import Model
 
 # Backtest function
 
 
 def run_backtest(
     log_ret: pd.Series,
-    model: Model,
+    forecast_fn,
     horizon: int,
     start_date: float | str = 0.5,
     stride: int = 1,
+    **forecast_kwargs,
 ) -> pd.DataFrame:
     """
     Run backtests for the corresponding model.
@@ -46,8 +46,9 @@ def run_backtest(
         train_vol = real_vol[: end_ix + 1]
 
         # Forecast and true value
-        model.fit(log_ret=train_ret, real_vol=train_vol)
-        y_pred = model.predict(horizon)
+        y_pred = forecast_fn(
+            log_ret=train_ret, real_vol=train_vol, horizon=horizon, **forecast_kwargs
+        )
         y_true = real_vol.iloc[end_ix + horizon]
 
         # Store results
