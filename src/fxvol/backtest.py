@@ -4,7 +4,6 @@ Rolling window backtesting.
 
 # Imports
 
-import numpy as np
 import pandas as pd
 
 from fxvol.fin_comp import realized_vol

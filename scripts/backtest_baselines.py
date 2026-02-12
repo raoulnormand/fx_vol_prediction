@@ -9,16 +9,15 @@ import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 from fxvol.backtest import run_backtest
-from fxvol.data_utils import load_csv, save_csv
-from fxvol.fin_comp import qlike_loss
-from fxvol.models import (  # log_har_forecast,
+from fxvol.baseline_models import (
     ewma_forecast,
-    exog_har_forecast,
     garch11_forecast,
     har_forecast,
     naive_forecast,
     rolling_mean_forecast,
 )
+from fxvol.data_utils import load_csv, save_csv
+from fxvol.fin_comp import qlike_loss
 
 # Data
 
@@ -36,7 +35,6 @@ models = [
     (ewma_forecast, "ewma092", {}),
     (ewma_forecast, "ewma030", {"alpha": 0.3}),
     (har_forecast, "har1-5-22", {"lags": [1, 5, 22]}),
-    (exog_har_forecast, "exog_har1-5-22", {"lags": [1, 5, 22]}),
     (har_forecast, "har1-5-22-66", {"lags": [1, 5, 22, 66]}),
     (garch11_forecast, "garch11", {}),
 ]

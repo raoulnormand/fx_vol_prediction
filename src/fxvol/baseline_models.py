@@ -1,6 +1,8 @@
 """
-Define prediction functions for different models.
-All functions take log_ret and real_vol as argument, even though one of them may not be used; this is not an issue since real_vol is calculated consistently in the basktesting function.
+Define prediction functions for different baseline models.
+All functions take log_ret and real_vol as argument, even though one of them
+may not be used; this is not an issue since real_vol is calculated
+consistently in the basktesting function.
 """
 
 # Imports
@@ -69,46 +71,6 @@ def har_forecast(
     return model.forecast(horizon=horizon).mean.iloc[0, -1] / scale  # type: ignore
 
 
-# HAR model + exogeneous regressor
-
-
-def exog_har_forecast(
-    log_ret: pd.Series,
-    real_vol: pd.Series,
-    horizon: int,
-    lags: List[int],
-    scale: int = 1000,
-):
-    """
-    HAR model for realized vol
-    + an exogeneous regressor = real_vol x 1_(negative return).
-    """
-
-    # Drop na consistently
-
-    rv = scale * real_vol.dropna()
-    r = log_ret.loc[rv.index]
-
-    # target is RV_{t+h}
-
-    y = rv.shift(-horizon).dropna()
-
-    # align regressors to y's index (so regressors are at time t)
-
-    rv_x = rv.loc[y.index]
-    r_x = r.loc[y.index]
-
-    # Exogenerous regressor
-
-    exog = ((r_x < 0) * rv_x).to_frame()
-
-    # Fit predict
-
-    model = HARX(y=y, x=exog, lags=lags, rescale=False).fit(disp="off")
-
-    return model.forecast(horizon=1, x=exog.iloc[[-1]]).mean.iloc[0, -1] / scale  # type: ignore
-
-
 # GARCH11 model
 
 
@@ -126,27 +88,3 @@ def garch11_forecast(
     am = arch_model(scaled_ret, vol="GARCH", p=1, o=0, q=1, dist="normal")
     res = am.fit(disp="off", update_freq=0)
     return np.sqrt(res.forecast(horizon=horizon).variance.iloc[-1, -1]) / scale  # type: ignore
-
-    # model = arch_model(scaled_ret).fit(disp="off")
-    # return model.forecast(horizon=horizon).mean.iloc[0, -1] / scale  # type: ignore
-
-
-# HAR model for log RV
-# Barely makes a difference. Ignore for simplicity.
-
-
-def log_har_forecast(
-    log_ret: pd.Series,
-    real_vol: pd.Series,
-    horizon: int,
-    lags: List[int],
-    scale: int = 10,
-):
-    """
-    HAR model for log(RV).
-    """
-
-    log_vol = scale * (np.log(real_vol.dropna()))
-    model = HARX(log_vol, lags=lags, rescale=False).fit(disp="off")
-    forc = model.forecast(horizon=horizon).mean.iloc[0, -1]
-    return np.exp(forc / scale)  # type: ignore
