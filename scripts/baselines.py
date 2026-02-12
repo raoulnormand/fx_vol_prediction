@@ -11,12 +11,11 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from fxvol.backtest import run_backtest
 from fxvol.data_utils import load_csv, save_csv
 from fxvol.fin_comp import qlike_loss
-from fxvol.models import (
+from fxvol.models import (  # log_har_forecast,
     ewma_forecast,
     exog_har_forecast,
     garch11_forecast,
     har_forecast,
-    log_har_forecast,
     naive_forecast,
     rolling_mean_forecast,
 )
@@ -29,19 +28,17 @@ eur_ret = log_ret["EUR"]
 # Models
 
 models = [
-    #(naive_forecast, "naive", {}),
-    #(rolling_mean_forecast, "rolling5", {"window": 5}),
-    #(rolling_mean_forecast, "rolling20", {"window": 20}),
-    #(rolling_mean_forecast, "rolling50", {"window": 50}),
-    #(rolling_mean_forecast, "rolling100", {"window": 100}),
-    #(ewma_forecast, "ewma092", {}),
-    #(ewma_forecast, "ewma030", {"alpha": 0.3}),
-    #(har_forecast, "har1-5-22", {"lags": [1, 5, 22]}),
+    (naive_forecast, "naive", {}),
+    (rolling_mean_forecast, "rolling5", {"window": 5}),
+    (rolling_mean_forecast, "rolling20", {"window": 20}),
+    (rolling_mean_forecast, "rolling50", {"window": 50}),
+    (rolling_mean_forecast, "rolling100", {"window": 100}),
+    (ewma_forecast, "ewma092", {}),
+    (ewma_forecast, "ewma030", {"alpha": 0.3}),
+    (har_forecast, "har1-5-22", {"lags": [1, 5, 22]}),
     (exog_har_forecast, "exog_har1-5-22", {"lags": [1, 5, 22]}),
-    #(har_forecast, "har1-5-22-66", {"lags": [1, 5, 22, 66]}),
-    #(log_har_forecast, "log_har1-5-22", {"lags": [1, 5, 22]}),
-    #(log_har_forecast, "log_har1-5-22-66", {"lags": [1, 5, 22, 66]}),
-    #(garch11_forecast, "garch11", {}),
+    (har_forecast, "har1-5-22-66", {"lags": [1, 5, 22, 66]}),
+    (garch11_forecast, "garch11", {}),
 ]
 
 # Run backest
