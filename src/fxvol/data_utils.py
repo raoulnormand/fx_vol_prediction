@@ -9,6 +9,8 @@ from pathlib import Path
 import pandas as pd
 import yfinance as yf
 
+from fxvol.fin_comp import realized_vol
+
 # Directories
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -44,3 +46,66 @@ def load_csv(folder: "str", name: str, index_col: str = "Date") -> pd.DataFrame:
     """
     origin_dir = DATA_DIR / f"{folder}"
     return pd.read_csv(origin_dir / f"{name}.csv", index_col=index_col)
+
+
+# Create features
+
+
+def make_features(
+    log_ret: pd.Series,
+    window: int,
+    lags: list[int] | None = None,
+    use_asym: bool = False,
+):
+    """
+    Create features for training models.
+    """
+    # Design matrix
+    X = pd.DataFrame(index=log_ret.index)
+
+    # X contains at least log returns and realized_vol
+    X["lr"] = log_ret
+    X["rv"] = realized_vol(log_ret, window=window)
+
+    # Standard features: rolling means
+    if lags is not None:
+        for lag in lags:
+            if lag == 1:
+                pass
+            else:
+                X[f"rv_{lag}"] = X["rv"].rolling(lag).mean()
+
+    # Asymmetric feature: vol * 1_{< 0 return}
+
+    if use_asym:
+        X["asym"] = X["rv"] * (log_ret < 0).astype(float)
+
+    return X
+
+
+# Create aligned features and target
+
+
+def make_xy(
+    log_ret: pd.Series,
+    horizon: int,
+    lags: list[int] | None = None,
+    use_asym: bool = False,
+    **_,
+) -> tuple[pd.DataFrame, pd.Series]:
+    """
+    Build aligned features (using data up to t)
+    and target (realized vol at given horizon).
+    Note that realized vol over horizon days for consistency.
+    """
+    # Features
+    X = make_features(log_ret, window=horizon, lags=lags, use_asym=use_asym)
+
+    # Target = shifted real_vol
+    y = X["rv"].shift(-horizon).rename("y")
+
+    # Deal with missing values
+
+    df = pd.concat([y, X], axis=1).dropna()
+
+    return df.drop(columns=["y"]), df["y"]

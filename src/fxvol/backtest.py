@@ -6,26 +6,26 @@ Rolling window backtesting.
 
 import pandas as pd
 
-from fxvol.fin_comp import realized_vol
+from fxvol.data_utils import make_xy
 
 # Backtest function
 
 
 def run_backtest(
     log_ret: pd.Series,
-    forecast_fn,
     horizon: int,
+    forecast_fn,
     start_date: float | str = 0.5,
     stride: int = 1,
-    **forecast_kwargs,
+    **kwargs,
 ) -> pd.DataFrame:
     """
     Run backtests for the corresponding model.
     Start at start_date (date or fraction of total time), and jumps by stride each time.
     Computes value for the given horizon.
     """
-    # Compute realized_vol for a period = horizon
-    real_vol = realized_vol(log_ret, window=horizon)
+    # Compute features and target
+    X, y = make_xy(log_ret=log_ret, horizon=horizon, **kwargs)
 
     # Get index of start date
     if isinstance(start_date, float):
@@ -39,19 +39,16 @@ def run_backtest(
 
     results = {"Date": [], "y_true": [], "y_pred": []}
 
-    while end_ix + horizon < len(log_ret):
+    while end_ix + horizon < len(y):
         # Training data, current day included
-        train_ret = log_ret.iloc[: end_ix + 1]
-        train_vol = real_vol[: end_ix + 1]
+        train = X.iloc[: end_ix + 1]
 
         # Forecast and true value
-        y_pred = forecast_fn(
-            log_ret=train_ret, real_vol=train_vol, horizon=horizon, **forecast_kwargs
-        )
-        y_true = real_vol.iloc[end_ix + horizon]
+        y_pred = forecast_fn(X=train, horizon=horizon, **kwargs)
+        y_true = y.iloc[end_ix]
 
         # Store results
-        results["Date"].append(log_ret.index[end_ix])
+        results["Date"].append(X.index[end_ix])
         results["y_true"].append(y_true)
         results["y_pred"].append(y_pred)
 

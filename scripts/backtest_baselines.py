@@ -32,7 +32,7 @@ models = [
     (rolling_mean_forecast, "rolling20", {"window": 20}),
     (rolling_mean_forecast, "rolling50", {"window": 50}),
     (rolling_mean_forecast, "rolling100", {"window": 100}),
-    (ewma_forecast, "ewma092", {}),
+    (ewma_forecast, "ewma090", {"alpha": 0.9}),
     (ewma_forecast, "ewma030", {"alpha": 0.3}),
     (har_forecast, "har1-5-22", {"lags": [1, 5, 22]}),
     (har_forecast, "har1-5-22-66", {"lags": [1, 5, 22, 66]}),

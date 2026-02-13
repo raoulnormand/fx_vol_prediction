@@ -16,37 +16,33 @@ from arch.univariate import HARX, arch_model
 # Naive model
 
 
-def naive_forecast(log_ret: pd.Series, real_vol: pd.Series, horizon: int) -> float:
+def naive_forecast(X: pd.DataFrame, horizon: int, **_) -> float:
     """
     Naive forecast: predict latest realized vol.
     """
 
-    return real_vol.iloc[-1]
+    return X["rv"].iloc[-1]
 
 
 # Rolling mean model
 
 
-def rolling_mean_forecast(
-    log_ret: pd.Series, real_vol: pd.Series, horizon: int, window: int
-) -> float:
+def rolling_mean_forecast(X: pd.DataFrame, horizon: int, window: int, **_) -> float:
     """
     Rolling mean forecast: predict mean of latest *window* realized vol.
     """
-    return real_vol.iloc[-window:].mean()
+    return X["rv"].iloc[-window:].mean()
 
 
 # Exponential weighted moving average model
 
 
-def ewma_forecast(
-    log_ret: pd.Series, real_vol: pd.Series, horizon: int, alpha: float = 0.92
-) -> float:
+def ewma_forecast(X: pd.DataFrame, horizon: int, alpha: float) -> float:
     """
-    EWMA model. 0.92 is a recommended value for one-weeek ahead forecast.
+    EWMA model.
     """
 
-    var = (log_ret**2).ewm(alpha=alpha, adjust=False).mean()
+    var = (X["lr"] ** 2).ewm(alpha=alpha, adjust=False).mean()
     return np.sqrt(var.iloc[-1])
 
 
@@ -54,8 +50,7 @@ def ewma_forecast(
 
 
 def har_forecast(
-    log_ret: pd.Series,
-    real_vol: pd.Series,
+    X: pd.DataFrame,
     horizon: int,
     lags: List[int],
     scale: int = 1000,
@@ -66,7 +61,7 @@ def har_forecast(
     Scale to avoid convergence issues.
     """
 
-    scaled_vol = (scale * real_vol).dropna()
+    scaled_vol = (scale * X["rv"]).dropna()
     model = HARX(scaled_vol, lags=lags, rescale=False).fit(disp="off")
     return model.forecast(horizon=horizon).mean.iloc[0, -1] / scale  # type: ignore
 
@@ -75,8 +70,7 @@ def har_forecast(
 
 
 def garch11_forecast(
-    log_ret: pd.Series,
-    real_vol: pd.Series,
+    X: pd.DataFrame,
     horizon: int,
     scale: int = 100,
 ):
@@ -84,7 +78,7 @@ def garch11_forecast(
     GARCH(1, 1) model
     """
 
-    scaled_ret = scale * log_ret
+    scaled_ret = scale * X["lr"]
     am = arch_model(scaled_ret, vol="GARCH", p=1, o=0, q=1, dist="normal")
     res = am.fit(disp="off", update_freq=0)
     return np.sqrt(res.forecast(horizon=horizon).variance.iloc[-1, -1]) / scale  # type: ignore

@@ -9,23 +9,14 @@ import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 from fxvol.backtest import run_backtest
-from fxvol.data_utils import load_csv, save_csv
-from fxvol.fin_comp import qlie_loss
-from fxvol.ML_utils import make_xy
+from fxvol.data_utils import load_csv, save_csv, make_xy
+from fxvol.fin_comp import qlike_loss
 from fxvol.ML_models import har_ols_forecast
 
 # Data
 
 log_ret = load_csv("processed", "log_returns").dropna()
 eur_ret = log_ret["EUR"]
-real_vol = 
-X, y = make_xy(
-    log_ret=log_ret,
-    real_vol=real_vol,
-    horizon=horizon,
-    lags=lags,
-    use_asym=use_asym,
-)
 
 # Models
 
