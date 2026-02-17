@@ -7,7 +7,7 @@ Compute scores for ML forecasts.
 
 from fxvol.backtest import backtest_results
 from fxvol.data_utils import load_csv
-from fxvol.ML_models import har_type_ols_forecast
+from fxvol.ML_models import elastic_net, gb_tree, ols
 
 # Data
 
@@ -17,12 +17,10 @@ eur_ret = log_ret["EUR"]
 # Models
 
 models = [
-    (har_type_ols_forecast, "ols-1-5-22", {"lags": [1, 5, 22]}),
-    (
-        har_type_ols_forecast,
-        "ols-1-5-22-66",
-        {"lags": [1, 5, 22, 66]},
-    ),
+    # (ols, "ols-1-5-22", {"lags": [1, 5, 22]}),
+    (ols, "ols-1-5-22-66", {"lags": [1, 5, 22, 66]}),
+    # (elastic_net, "elastic_net", {"lags": [1, 5, 22, 66]}),
+    (gb_tree, "gb_tree", {"lags": [1, 5, 22]}),
 ]
 
 # Run backest
