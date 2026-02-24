@@ -44,5 +44,5 @@ for currency in CURRENCIES:
         feature_kwargs=FEATURE_KWARGS,
         models=MODELS,
         horizon=HORIZON,
-        file_name="backtests_" + currency,
+        file_name=currency,
     )

@@ -31,7 +31,7 @@ def fetch_yahoo(tickers: list[str], start: str, end: str) -> pd.DataFrame:
 # Save and load CSV
 
 
-def save_csv(df: pd.DataFrame | pd.Series, folder: "str", name: str) -> None:
+def save_csv(df: pd.DataFrame | pd.Series, folder: str, name: str) -> None:
     """
     Saves df as csv in corresponding folder
     """
@@ -40,7 +40,7 @@ def save_csv(df: pd.DataFrame | pd.Series, folder: "str", name: str) -> None:
     df.to_csv(target_dir / f"{name}.csv")
 
 
-def load_csv(folder: "str", name: str, index_col: str = "Date") -> pd.DataFrame:
+def load_csv(folder: str, name: str, index_col: str = "Date") -> pd.DataFrame:
     """
     Load csv from corresponding folder as df
     """

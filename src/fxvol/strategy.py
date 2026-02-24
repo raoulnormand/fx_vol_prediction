@@ -94,10 +94,10 @@ def run_strategy(
 
     # Use exact formula to get log returns over each period
     weights = target_vol / (preds * np.sqrt(nb_trading_days * len(data)))
-    portfolio_ret = np.log(1 + (weights * (np.exp(period_log_rets) - 1)).sum(axis=1))
-    
+    pf_log_ret = np.log(1 + (weights * (np.exp(period_log_rets) - 1)).sum(axis=1))
+
     # Save results if desired
     if file_name is not None:
-        save_csv(portfolio_ret.astype(float), "results", file_name)
+        save_csv(pf_log_ret.astype(float), "results/strategy", file_name)
 
-    return portfolio_ret
+    return pf_log_ret

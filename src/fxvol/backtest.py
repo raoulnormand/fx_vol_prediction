@@ -107,6 +107,6 @@ def backtest_results(
 
     # Save results if desired
     if file_name is not None:
-        save_csv(scores.astype(float), "results", file_name)
+        save_csv(scores.astype(float), "results/backtest", file_name)
 
     return scores
