@@ -14,7 +14,7 @@ from fxvol.strategy import run_strategy
 
 log_rets = load_csv("processed", "log_returns").dropna()
 
-CURRENCIES = ["AUD"]  # , "CHF", "EUR", "GBP", "JPY"]
+CURRENCIES = ["AUD", "CHF", "EUR", "GBP", "JPY"]
 
 # Models
 
@@ -33,20 +33,21 @@ MODELS = [
 ]
 
 # Run backest
-log_ret = log_rets["JPY"]
+
 FEATURE_KWARGS = {"lags": [1, 5, 22, 66], "vol_vol": 22}
-
 HORIZON = 5
-X, y = make_xy(log_ret=log_ret, horizon=HORIZON, **FEATURE_KWARGS)
+DATA = [
+    (curr,) + make_xy(log_ret=log_rets[curr], horizon=HORIZON, **FEATURE_KWARGS)
+    for curr in CURRENCIES
+]
+TARGET_VOL = 0.1
 
-
-# FEATURE_KWARGS = {"lags": [1, 5, 22, 66], "vol_vol": 22}
-
-run_strategy(
+for model in MODELS:
+    pf_log_ret = run_strategy(
     X=X,
     y=y,
-    model=(ols_fc, "ols", {}),
+    model=model,
     horizon=HORIZON,
-    target_vol=0.1,
-    file_name="ret_eur",
+    target_vol=TARGET_VOL,
+    file_name="",
 )

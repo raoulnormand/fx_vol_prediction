@@ -76,7 +76,6 @@ def backtest_results(
     start_date: float | str = 0.5,
     stride: int = 1,
     file_name: str | None = None,
-    sigfig: int = 5,
 ) -> pd.DataFrame:
     """
     Get scores for different models, and potentially saves them.
@@ -108,6 +107,6 @@ def backtest_results(
 
     # Save results if desired
     if file_name is not None:
-        save_csv(scores.astype(float).round(sigfig), "results", file_name)
+        save_csv(scores.astype(float), "results", file_name)
 
     return scores

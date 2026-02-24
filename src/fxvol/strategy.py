@@ -73,33 +73,29 @@ def run_strategy(
     file_name: str | None = None,
 ) -> pd.DataFrame:
     """
-    Run the volatility targeting strategy for a given model and returns log returns. Saves file if desired.
+    Run the volatility targeting strategy for a given model and target annual volatility.
+    Returns log returns of the portfolio over each period.
+    Saves as csv file if desired.
     """
-
-    # Make target_vol daily
-    daily_target_vol = target_vol / np.sqrt(nb_trading_days)
 
     # Get prediction
     preds = get_pred(data, model, horizon, start_date)
 
-    # Get log returns over each horizon
-    log_rets = pd.DataFrame({curr: X["lr"] for curr, X, _ in data})
+    # Get log returns over each period
+    log_rets = pd.DataFrame(
+        {curr: X["lr"] for curr, X, _ in data}
+    )  # log ret for each asset
     log_rets = log_rets.loc[preds.index[0] :]  # remove burning period
-    period_log_rets = log_rets.rolling(horizon).sum()  # returns over horizon
+    period_log_rets = log_rets.rolling(horizon).sum()  # cumulative returns over horizon
 
     # Align
     preds = preds.shift(1).iloc[1:]
     period_log_rets = period_log_rets.loc[preds.index]  # remove intermediate days
 
-    # Use exact formula to get log returns over each period, then
-    # cumsum to get the total returns
-    weights = daily_target_vol / (preds * np.sqrt(horizon))
-    portfolio_ret = np.log(
-        (weights * np.exp(period_log_rets)).sum(axis=1) + 1 - weights.sum(axis=1)
-    )
-    # May be better to add a column for riskless asset
-    portfolio_ret = portfolio_ret.cumsum()
-
+    # Use exact formula to get log returns over each period
+    weights = target_vol / (preds * np.sqrt(nb_trading_days * len(data)))
+    portfolio_ret = np.log(1 + (weights * (np.exp(period_log_rets) - 1)).sum(axis=1))
+    
     # Save results if desired
     if file_name is not None:
         save_csv(portfolio_ret.astype(float), "results", file_name)
