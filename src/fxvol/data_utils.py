@@ -14,7 +14,6 @@ from fxvol.fin_comp import realized_vol
 # Directories
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-DATA_DIR = ROOT / "data"
 
 # Fetch data
 
@@ -35,7 +34,7 @@ def save_csv(df: pd.DataFrame | pd.Series, folder: str, name: str) -> None:
     """
     Saves df as csv in corresponding folder
     """
-    target_dir = DATA_DIR / f"{folder}"
+    target_dir = ROOT / f"{folder}"
     target_dir.mkdir(parents=True, exist_ok=True)
     df.to_csv(target_dir / f"{name}.csv")
 
@@ -44,7 +43,7 @@ def load_csv(folder: str, name: str, index_col: str = "Date") -> pd.DataFrame:
     """
     Load csv from corresponding folder as df
     """
-    origin_dir = DATA_DIR / f"{folder}"
+    origin_dir = ROOT / f"{folder}"
     return pd.read_csv(origin_dir / f"{name}.csv", index_col=index_col)
 
 

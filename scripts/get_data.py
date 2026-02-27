@@ -19,4 +19,4 @@ df = fetch_yahoo(TICKERS, START, END)
 df = df['Close']
 name_dic = dict(zip(TICKERS, NEW_TICKER_NAMES))
 df.rename(columns=name_dic, inplace=True)
-save_csv(df, "raw", "fx_spots")
+save_csv(df, "data/raw", "fx_spots")

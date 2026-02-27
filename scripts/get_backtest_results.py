@@ -12,7 +12,7 @@ from fxvol.ML_models import elastic_net_fc, gb_tree_fc, ols_fc
 
 # Data
 
-log_rets = load_csv("processed", "log_returns").dropna()
+log_rets = load_csv("data/processed", "log_returns").dropna()
 
 CURRENCIES = ["AUD", "CHF", "EUR", "GBP", "JPY"]
 

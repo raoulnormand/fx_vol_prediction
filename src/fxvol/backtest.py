@@ -104,6 +104,7 @@ def backtest_results(
         mae = mean_absolute_error(y_true, y_pred)
         qlike = qlike_loss(y_true, y_pred)
         scores.loc[name] = [rmse, mae, qlike]
+        scores.sort_values(by='QLIKE', inplace=True)
 
     # Save results if desired
     if file_name is not None:

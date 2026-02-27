@@ -12,17 +12,17 @@ from fxvol.strategy import run_strategy
 
 # Data
 
-log_rets = load_csv("processed", "log_returns").dropna()
+log_rets = load_csv("data/processed", "log_returns").dropna()
 
 CURRENCIES = ["AUD", "CHF", "EUR", "GBP", "JPY"]
 
 # Models
 
 MODELS = [
-    # (rolling_mean_fc, "rolling50", {"window": 50}),
-    # (har_fc, "har", {"lags": [1, 5, 22, 66]}),
-    # (garch11_fc, "garch11", {}),
-    # (ols_fc, "ols", {}),
+    (rolling_mean_fc, "rolling50", {"window": 50}),
+    (har_fc, "har", {"lags": [1, 5, 22, 66]}),
+    (garch11_fc, "garch11", {}),
+    (ols_fc, "ols", {}),
     (gb_tree_fc, "gb_tree", {}),
 ]
 
