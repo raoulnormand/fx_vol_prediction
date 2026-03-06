@@ -1,5 +1,5 @@
 """
-Run volatility targeting straeegy for 5 assets.
+Run volatility targeting strategy for 5 assets.
 """
 
 # Imports
@@ -26,7 +26,7 @@ MODELS = [
     (gb_tree_fc, "gb_tree", {}),
 ]
 
-# Run backest
+# Run strategy
 
 FEATURE_KWARGS = {"lags": [1, 5, 22, 66], "vol_vol": 22}
 HORIZON = 5
