@@ -39,7 +39,7 @@ def save_csv(df: pd.DataFrame | pd.Series, folder: str, name: str) -> None:
     df.to_csv(target_dir / f"{name}.csv")
 
 
-def load_csv(folder: str, name: str, index_col: str = "Date") -> pd.DataFrame:
+def load_csv(folder: str, name: str, index_col: str | int = "Date") -> pd.DataFrame:
     """
     Load csv from corresponding folder as df
     """
