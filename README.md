@@ -22,7 +22,7 @@ w^{(i)}_t = \frac{\sigma^*}{\hat{\sigma}_{t+h}}
 $$
 for asset $i$. This is held over the period $(t, t+h]$. If the assets are uncorrelated and the vol predictions are good, we expect that the annual vol of our portfolio will be close to $\sigma^*$.
 
-## Results
+## Volatility forecasting
 
 Data exploration results and graphs can be found in [this notebook](./notebooks/01_data_exploration.ipynb). All the backtesting and vol targeting results are in the [results](./results/) folder, with more explanations and figures in [this notebook](./notebooks/02_summary.ipynb). Here is a summary.
 
@@ -58,7 +58,19 @@ The metric usually favored is QLIKE, and our results will be ordered by decreasi
 
 ### Results
 
-The losses for each model are as followed. These are averaged over all currencies, but the ordering is essentially consistent across currencies. All details are in the [notebook](./notebooks/02_summary.ipynb) or the [backtest](./results/backtest/) folder.
+#### QLIKE
+
+The QLIKE loss for each model and currency is summarized in the following heatmap.
+
+![QLIKE heatmap](./pictures/fc_heatmap.png)
+
+Averaging QLIKE over all currencies gives the following chart
+
+![Forecast bar chart](./pictures/fc_bar_chart.png)
+#
+### All loses
+
+The MAE, RMSE, and QLIKE, averaged over all currencies, are given in the following table.
 
 |     Model             |      MAE |     RMSE |    QLIKE |
 |-----------------:|---------:|---------:|---------:|
@@ -74,14 +86,36 @@ The losses for each model are as followed. These are averaged over all currencie
 |            naive | 2.15e-03 | 2.95e-03 | 2.16e-01 |
 |          ewma090 | 2.73e-03 | 3.70e-03 | 6.25e-01 |
 
-The clear winners are gradient-boosted trees and OLS. The GB tree can capture some non-linearities that OLS does not see, though the minor difference seems to indicate that this is minimal. It is also likely that hyperparameter tweaking and feature engineering may slightly improve results.
 
-The comparison can also be visualized (using the QLIKE loss) with the following bar chart
+Complete results are in the [notebook](./notebooks/02_summary.ipynb) or the [backtest](./results/backtest/) folder.
 
+#### Conclusion
 
-and heat map.
+The clear winners are gradient-boosted trees and OLS, and this is consistent across all currencies. The industry standard HAR and GARCH(1, 1) are slightly behind. Disappointingly, these sometimes perform less well than a very simple rolling mean.
 
-## Setup
+The GB tree can capture some non-linearities that OLS does not see, though the minor difference seems to indicate that this is minimal. It is also likely that hyperparameter tweaking and feature engineering may slightly improve results.
+
+## Volatility targeting
+
+We use a target annual volatility of 10%. Since FX vol is a few percentage points, this means that we may need leverage, i.e. the weights defined above would sum to more than 1.
+
+### Results
+
+The following table summarizes annualized return, annualized vol $\hat{\sigma}$, volatility error
+$$
+\left | \hat{\sigma} - \sigma^* \right |,
+$$
+Sharpe ratio, and max drawdown for each model. The main quantity of interest is the annualized vol, summarized in the following graph.
+
+![Historic vol bar chart](./pictures/vol_bar_chart.png)
+
+It is interesting to see **better vol predictions do not imply better vol targeting**. While models with poor predictions (e.g. naive, ewma) yield poor vol targeting, the best predictive models (GB tree, OLS) do not yield the best vol targeting. Instead, the elastic net model, whose score is ~30% worse than GB tree, has the best vol targeting. This is likely due to **regularization ensuring more stable predictions**.
+
+As shown in the table above, the elastic net model is also the only one that manages to yield positive return, despite the downward trend of all FX spots (except JPY).
+
+![Historic vol bar chart](./pictures/equity_curves.png)
+
+## Installation
 
 This project uses [uv](https://docs.astral.sh/uv/). First clone the project, then run
 ```
@@ -101,7 +135,7 @@ uv run scripts/run_backtests.py
 ```
 Run the volatility targeting strategy and save the returns with
 ```
-uv run scripts/comp_start_returns.py
+uv run scripts/comp_strat_returns.py
 ```
 Finally, summary of the metrics for each model are computed and saved with
 ```
