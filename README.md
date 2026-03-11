@@ -19,21 +19,27 @@ This project compares several models for forecasting FX realized volatility, and
 ## Summary
 
 This project uses FX spot data from 2010-01-01 to 2025-12-31 for AUD, CHF, EUR, GBP, and JPY against USD, using daily close data. For each spot $(S^{(i)}_t)$, we compute the daily log returns
+
 $$
 r^{(i)}_t = \log \left( \frac{S^{(i)}_t}{S^{(i)}_{t-1}} \right)
 $$
+
 then the realized volatility over a horizon of $h$ days:
+
 $$
 \sigma^{(i)}_t = \mathrm{std}\left( r^{(i)}_t, r^{(i)}_{t-1}, \dots, r^{(i)}_{t-h+1} \right).
 $$
+
 The default value used for the results below is one week, that is $h = 5$.
 
 We first compare different models for volatility forecasting: using data $(r^{(i)}_t)_{t \leq T}$, we aim to predict the realized volatility $\sigma^{(i)}_{t+h}$ with a forecast $\hat{\sigma}^{(i)}_{t+h}$. This shift avoids overlap, so that the features and targets are computed from non-intersecting sets of returns.
 
 We then use these predictions to build a portfolio with a volatility targeting strategy. Given a target annual volatility $\sigma^*$ for the portfolio (we use $\sigma^* = 10\%$), we set weights
+
 $$
 w_t^{(i)} = \frac{\sigma^*}{\hat{\sigma}^{(i)}_{t+h}}
 $$
+
 for asset $i$. These positions are then held over the period $(t, t+h]$. If the assets are uncorrelated and the volatility predictions are good, we expect the annualized volatility of the portfolio to be close to $\sigma^*$.
 
 ## Volatility forecasting
@@ -58,16 +64,19 @@ We compare the following models for volatility forecasting.
 Assume that we have targets $(\sigma_t)_{t \in S}$ and forecasts $(\hat{\sigma}_t)_{t \in S}$. Here, $S$ is the set of predicted dates, consisting of one value every 5 trading days after a burn-in period (taken by default to be half of the total length of the dataset). The metrics we use are:
 
 - Mean Absolute Error:
+
 $$
 \mathrm{MAE} = \frac{1}{|S|} \sum_{t \in S} \left| \sigma_t - \hat{\sigma}_t \right|.
 $$
 
 - Root Mean Square Error:
+
 $$
 \mathrm{RMSE} = \sqrt{ \frac{1}{|S|} \sum_{t \in S} \left( \sigma_t - \hat{\sigma}_t \right)^2 }.
 $$
 
 - [QLIKE](https://public.econ.duke.edu/~ap172/Patton_robust_forecast_eval_11dec08.pdf) loss, which penalizes underestimation more than overestimation:
+
 $$
 \mathrm{QLIKE} = \frac{1}{|S|} \sum_{t \in S} \left( \frac{\sigma_t}{\hat{\sigma}_t} - \log \left( \frac{\sigma_t}{\hat{\sigma}_t} \right) - 1 \right).
 $$
@@ -119,9 +128,11 @@ We use a target annual volatility of 10%. Since FX volatility is only a few perc
 ### Results
 
 The following table summarizes annualized return, annualized volatility $\hat{\sigma}$, volatility error
+
 $$
 \left| \hat{\sigma} - \sigma^* \right|,
 $$
+
 Sharpe ratio, and maximum drawdown for each model.
 
 |         Model         | ann_return | ann_vol | vol_error | Sharpe | max_dd |
