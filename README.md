@@ -32,9 +32,9 @@ $$
 
 The default value used for the results below is one week, that is $h = 5$.
 
-We first compare different models for volatility forecasting: using data $(r^{(i)}_t)_{t \leq T}$, we aim to predict the realized volatility $\sigma^{(i)}_{t+h}$ with a forecast $\hat{\sigma}^{(i)}_{t+h}$. This shift avoids overlap, so that the features and targets are computed from non-intersecting sets of returns.
+We first compare different models for volatility forecasting: using data $(r^{(i)}\_t)\_{t \leq T}$, we aim to predict the realized volatility $\sigma^{(i)}\_{t+h}$ with a forecast $\hat{\sigma}^{(i)}\_{t+h}$. This shift avoids overlap, so that the features and targets are computed from non-intersecting sets of returns.
 
-We then use these predictions to build a portfolio with a volatility targeting strategy. Given a target annual volatility $\sigma^*$ for the portfolio (we use $\sigma^* = 10\%$), we set weights
+We then use these predictions to build a portfolio with a volatility targeting strategy. Given a target annual volatility $\sigma^{\*}$ for the portfolio (we use $\sigma^{\*} = 10\%$), we set weights
 
 $$
 w_t^{(i)} = \frac{\sigma^*}{\hat{\sigma}^{(i)}_{t+h}}
@@ -61,7 +61,7 @@ We compare the following models for volatility forecasting.
 
 ### Metrics
 
-Assume that we have targets $(\sigma_t)_{t \in S}$ and forecasts $(\hat{\sigma}_t)_{t \in S}$. Here, $S$ is the set of predicted dates, consisting of one value every 5 trading days after a burn-in period (taken by default to be half of the total length of the dataset). The metrics we use are:
+Assume that we have targets $(\sigma_t)_{t \in S}$ and forecasts $(\hat{\sigma}\_t)\_{t \in S}$. Here, $S$ is the set of predicted dates, consisting of one value every 5 trading days after a burn-in period (taken by default to be half of the total length of the dataset). The metrics we use are:
 
 - Mean Absolute Error:
 
@@ -194,3 +194,4 @@ Finally, summary of the metrics for each model are computed and saved with
 ```
 uv run scripts/summarize_strats.py
 ```
+
